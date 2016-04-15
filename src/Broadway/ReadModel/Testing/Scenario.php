@@ -39,13 +39,20 @@ class Scenario
     public function __construct(
         PHPUnit_Framework_TestCase $testCase,
         RepositoryInterface $repository,
-        ProjectorInterface $projector
+        ProjectorInterface $projector,
+        DateTimeGenerator $dateTimeGenerator = null
     ) {
         $this->testCase    = $testCase;
         $this->repository  = $repository;
         $this->projector   = $projector;
         $this->playhead    = -1;
         $this->aggregateId = 1;
+
+        if (null === $dateTimeGenerator) {
+            $dateTimeGenerator = new NowDateTimeGenerator();
+        }
+
+        $this->dateTimeGenerator = $dateTimeGenerator;
     }
 
     /**
@@ -103,7 +110,7 @@ class Scenario
         $this->playhead++;
 
         if (null === $occurredOn) {
-            $occurredOn = DateTime::now();
+            $occurredOn = $this->dateTimeGenerator->generate();
         }
 
         return new DomainMessage($this->aggregateId, $this->playhead, new Metadata(array()), $event, $occurredOn);
