@@ -14,8 +14,6 @@ namespace Broadway\ReadModel\Testing;
 use Broadway\Domain\DateTime;
 use Broadway\Domain\DomainMessage;
 use Broadway\Domain\Metadata;
-use Broadway\Domain\Testing\DateTimeGenerator;
-use Broadway\Domain\Testing\NowDateTimeGenerator;
 use Broadway\ReadModel\ProjectorInterface;
 use Broadway\ReadModel\RepositoryInterface;
 use PHPUnit_Framework_TestCase;
@@ -37,24 +35,19 @@ class Scenario
     private $repository;
     private $playhead;
     private $aggregateId;
+    private $dateTime;
 
     public function __construct(
         PHPUnit_Framework_TestCase $testCase,
         RepositoryInterface $repository,
-        ProjectorInterface $projector,
-        DateTimeGenerator $dateTimeGenerator = null
+        ProjectorInterface $projector
     ) {
         $this->testCase    = $testCase;
         $this->repository  = $repository;
         $this->projector   = $projector;
         $this->playhead    = -1;
         $this->aggregateId = 1;
-
-        if (null === $dateTimeGenerator) {
-            $dateTimeGenerator = new NowDateTimeGenerator();
-        }
-
-        $this->dateTimeGenerator = $dateTimeGenerator;
+        $this->dateTime    = DateTime::now();
     }
 
     /**
@@ -67,6 +60,11 @@ class Scenario
         $this->aggregateId = $aggregateId;
 
         return $this;
+    }
+
+    public function usingDateTime(DateTime $dateTime)
+    {
+        $this->dateTime = $dateTime;
     }
 
     /**
@@ -112,7 +110,7 @@ class Scenario
         $this->playhead++;
 
         if (null === $occurredOn) {
-            $occurredOn = $this->dateTimeGenerator->generate();
+            $occurredOn = $this->dateTime;
         }
 
         return new DomainMessage($this->aggregateId, $this->playhead, new Metadata(array()), $event, $occurredOn);
