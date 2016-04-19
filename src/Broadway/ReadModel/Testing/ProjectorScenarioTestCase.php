@@ -12,6 +12,8 @@
 namespace Broadway\ReadModel\Testing;
 
 use Broadway\Domain\DateTime;
+use Broadway\Domain\Testing\DateTimeGenerator;
+use Broadway\Domain\Testing\MockDateTimeGenerator;
 use Broadway\ReadModel\InMemory\InMemoryRepository;
 use Broadway\ReadModel\Projector;
 use PHPUnit_Framework_TestCase as TestCase;
@@ -43,6 +45,9 @@ abstract class ProjectorScenarioTestCase extends TestCase
         return new Scenario($this, $repository, $this->createProjector($repository), $this->getDateTimeGenerator());
     }
 
+    /**
+     * @return DateTimeGenerator
+     */
     protected function getDateTimeGenerator()
     {
         return $this->dateTimeGenerator;

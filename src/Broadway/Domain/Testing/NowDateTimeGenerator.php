@@ -9,24 +9,17 @@
  * file that was distributed with this source code.
  */
 
-namespace Broadway\ReadModel\Testing;
+namespace Broadway\Domain\Testing;
 
 use Broadway\Domain\DateTime;
 
-class MockDateTimeGenerator implements DateTimeGenerator
+class NowDateTimeGenerator implements DateTimeGenerator
 {
-    private $dateTime;
-
-    public function __construct(DateTime $dateTime)
-    {
-        $this->dateTime = $dateTime;
-    }
-
     /**
      * @return DateTime
      */
     public function generate()
     {
-        return $this->dateTime;
+        return DateTime::now();
     }
 }

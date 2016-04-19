@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Broadway\ReadModel\Testing;
+namespace Broadway\Domain\Testing;
 
 use Broadway\Domain\DateTime;
 

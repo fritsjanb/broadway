@@ -14,6 +14,8 @@ namespace Broadway\ReadModel\Testing;
 use Broadway\Domain\DateTime;
 use Broadway\Domain\DomainMessage;
 use Broadway\Domain\Metadata;
+use Broadway\Domain\Testing\DateTimeGenerator;
+use Broadway\Domain\Testing\NowDateTimeGenerator;
 use Broadway\ReadModel\ProjectorInterface;
 use Broadway\ReadModel\RepositoryInterface;
 use PHPUnit_Framework_TestCase;
