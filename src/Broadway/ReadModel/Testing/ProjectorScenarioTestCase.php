@@ -25,10 +25,12 @@ abstract class ProjectorScenarioTestCase extends TestCase
      * @var Scenario
      */
     protected $scenario;
+    private $dateTimeGenerator;
 
     public function setUp()
     {
-        $this->scenario = $this->createScenario();
+        $this->dateTimeGenerator = new MockDateTimeGenerator(DateTime::now());
+        $this->scenario          = $this->createScenario();
     }
 
     /**
@@ -43,7 +45,7 @@ abstract class ProjectorScenarioTestCase extends TestCase
 
     protected function getDateTimeGenerator()
     {
-        return new MockDateTimeGenerator(DateTime::now());
+        return $this->dateTimeGenerator;
     }
 
     /**

@@ -15,7 +15,6 @@ use Broadway\Domain\DateTime;
 
 class NowDateTimeGenerator implements DateTimeGenerator
 {
-
     /**
      * @return DateTime
      */
