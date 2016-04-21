@@ -44,6 +44,8 @@ class DBALEventStore implements EventStoreInterface, EventStoreManagementInterfa
 
     private $tableName;
 
+    private $streamType;
+
     private $useBinary;
 
     /**
@@ -54,12 +56,14 @@ class DBALEventStore implements EventStoreInterface, EventStoreManagementInterfa
         SerializerInterface $payloadSerializer,
         SerializerInterface $metadataSerializer,
         $tableName,
+        $streamType,
         $useBinary = false
     ) {
         $this->connection         = $connection;
         $this->payloadSerializer  = $payloadSerializer;
         $this->metadataSerializer = $metadataSerializer;
         $this->tableName          = $tableName;
+        $this->streamType         = $streamType;
         $this->useBinary          = (bool) $useBinary;
 
         if ($this->useBinary && Version::compare('2.5.0') >= 0) {
@@ -76,6 +80,7 @@ class DBALEventStore implements EventStoreInterface, EventStoreManagementInterfa
     {
         $statement = $this->prepareLoadStatement();
         $statement->bindValue(1, $this->convertIdentifierToStorageValue($id));
+        $statement->bindValue(2, $this->streamType);
         $statement->execute();
 
         $events = array();
@@ -84,7 +89,7 @@ class DBALEventStore implements EventStoreInterface, EventStoreManagementInterfa
         }
 
         if (empty($events)) {
-            throw new EventStreamNotFoundException(sprintf('EventStream not found for aggregate with id %s for table %s', $id, $this->tableName));
+            throw new EventStreamNotFoundException(sprintf('EventStream not found for aggregate with id %s for stream %s and table %s', $id, $this->streamType, $this->tableName));
         }
 
         return new DomainEventStream($events);
@@ -121,6 +126,7 @@ class DBALEventStore implements EventStoreInterface, EventStoreManagementInterfa
     {
         $data = array(
             'uuid'        => $this->convertIdentifierToStorageValue((string) $domainMessage->getId()),
+            'stream'      => $this->streamType,
             'playhead'    => $domainMessage->getPlayhead(),
             'metadata'    => json_encode($this->metadataSerializer->serialize($domainMessage->getMetadata())),
             'payload'     => json_encode($this->payloadSerializer->serialize($domainMessage->getPayload())),
@@ -166,6 +172,7 @@ class DBALEventStore implements EventStoreInterface, EventStoreManagementInterfa
 
         $table->addColumn('id', 'integer', array('autoincrement' => true));
         $table->addColumn('uuid', $uuidColumnDefinition['type'], $uuidColumnDefinition['params']);
+        $table->addColumn('stream', 'string', array('length' => 255));
         $table->addColumn('playhead', 'integer', array('unsigned' => true));
         $table->addColumn('payload', 'text');
         $table->addColumn('metadata', 'text');
@@ -183,7 +190,7 @@ class DBALEventStore implements EventStoreInterface, EventStoreManagementInterfa
         if (null === $this->loadStatement) {
             $query = 'SELECT uuid, playhead, metadata, payload, recorded_on
                 FROM ' . $this->tableName . '
-                WHERE uuid = ?
+                WHERE uuid = ? AND stream = ?
                 ORDER BY playhead ASC';
             $this->loadStatement = $this->connection->prepare($query);
         }
@@ -259,12 +266,6 @@ class DBALEventStore implements EventStoreInterface, EventStoreManagementInterfa
 
     private function prepareVisitEventsStatementWhereAndBindValues(Criteria $criteria)
     {
-        if ($criteria->getAggregateRootTypes()) {
-            throw new CriteriaNotSupportedException(
-                'DBAL implementation cannot support criteria based on aggregate root types.'
-            );
-        }
-
         $bindValues = array();
         $bindValueTypes = array();
 
@@ -284,6 +285,16 @@ class DBALEventStore implements EventStoreInterface, EventStoreManagementInterfa
                 $bindValueTypes['uuids'] = Connection::PARAM_STR_ARRAY;
             }
         }
+
+        $streamTypes = $criteria->getStreamTypes();
+
+        if (count($streamTypes) === 0) {
+            $streamTypes = [$this->streamType];
+        }
+
+        $criteriaTypes[]               = 'stream IN (:streamTypes)';
+        $bindValues['streamTypes']     = $streamTypes;
+        $bindValueTypes['streamTypes'] = Connection::PARAM_STR_ARRAY;
 
         if ($criteria->getEventTypes()) {
             $criteriaTypes[] = 'type IN (:types)';

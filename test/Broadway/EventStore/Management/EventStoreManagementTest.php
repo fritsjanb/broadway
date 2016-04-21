@@ -106,20 +106,6 @@ abstract class EventStoreManagementTest extends TestCase
         ), $visitedEvents);
     }
 
-    /**
-     * @test
-     * @expectedException \Broadway\EventStore\Management\CriteriaNotSupportedException
-     */
-    public function it_visits_aggregate_root_types()
-    {
-        $visitedEvents = $this->visitEvents(Criteria::create()
-            ->withAggregateRootTypes(array(
-                'Broadway.EventStore.Management.AggregateTypeOne',
-                'Broadway.EventStore.Management.AggregateTypeTwo',
-            ))
-        );
-    }
-
     private function createAndInsertEventFixtures()
     {
         foreach ($this->getEventFixtures() as $domainMessage) {
